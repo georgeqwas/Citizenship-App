@@ -18,7 +18,7 @@
   .pad{padding:0 18px}
   .hidden{display:none!important}
   /* header */
-  .hdr{background:linear-gradient(180deg,var(--sky),var(--sky2)); color:#fff; padding:34px 18px 46px; border-radius:0 0 26px 26px}
+  .hdr{position:relative; background:linear-gradient(180deg,var(--sky),var(--sky2)); color:#fff; padding:34px 18px 46px; border-radius:0 0 26px 26px}
   .hdr .brand{display:flex; align-items:center; gap:8px; opacity:.92; font-size:14px; font-weight:600}
   .hdr h1{margin:6px 0 18px; font-size:25px}
   .ringrow{display:flex; align-items:center; gap:20px}
@@ -96,6 +96,44 @@
   .text-in{flex:1; border:1.5px solid var(--line); border-radius:12px; padding:12px 14px; font-size:16px; outline:none}
   .text-in:focus{border-color:var(--sky)}
   .ver{text-align:center; font-size:11px; color:#cbd5e1; padding:10px 0 84px}
+  /* ---- dark theme (opt-in via data-theme="dark" on <html>) ---- */
+  html{transition:background .2s}
+  .theme-toggle{position:absolute; top:18px; right:16px; width:40px; height:40px; border-radius:999px; border:none; background:rgba(255,255,255,.18); color:#fff; font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center}
+  [data-theme="dark"]{
+    --ink:#e5edf5; --mut:#94a3b8; --line:#334155; --bg:#0f172a;
+    --ok:#34d399; --okbg:#0c2e25; --no:#fb7185; --nobg:#3a1620; --sky:#0ea5e9; --sky2:#0284c7;
+  }
+  [data-theme="dark"] body, [data-theme="dark"] #app{ background:var(--bg); }
+  [data-theme="dark"] .card,
+  [data-theme="dark"] .opt,
+  [data-theme="dark"] .tfrow,
+  [data-theme="dark"] .chip,
+  [data-theme="dark"] .mitem,
+  [data-theme="dark"] .nav{ background:#1e293b; }
+  [data-theme="dark"] .card{ box-shadow:0 1px 3px rgba(0,0,0,.4); }
+  [data-theme="dark"] .opt{ color:#cbd5e1; border-color:#334155; }
+  [data-theme="dark"] .opt.dim{ color:#64748b; border-color:#293548; }
+  [data-theme="dark"] .tfrow{ border-color:#334155; }
+  [data-theme="dark"] .tfbtn, [data-theme="dark"] .btn-soft{ background:#334155; color:#cbd5e1; }
+  [data-theme="dark"] .btn-dark{ background:#475569; }
+  [data-theme="dark"] .note{ background:#1e293b; color:#cbd5e1; }
+  [data-theme="dark"] .listen,
+  [data-theme="dark"] .chip.sel,
+  [data-theme="dark"] .slot,
+  [data-theme="dark"] .chip.ghost,
+  [data-theme="dark"] .mitem.sel{ background:#0c344e; }
+  [data-theme="dark"] .slot.filled{ background:#0e4a6e; }
+  [data-theme="dark"] .slot.hover{ background:#075985; }
+  [data-theme="dark"] .reveal{ border-color:#155e44; }
+  [data-theme="dark"] .reveal .ans{ color:#6ee7b7; }
+  [data-theme="dark"] .opt.ok, [data-theme="dark"] .tfbtn.ok,
+  [data-theme="dark"] .mitem.ok, [data-theme="dark"] .slot.ok{ color:#6ee7b7; }
+  [data-theme="dark"] .tfbtn.ok{ background:#0c2e25; }
+  [data-theme="dark"] .opt.no, [data-theme="dark"] .tfbtn.no,
+  [data-theme="dark"] .mitem.no, [data-theme="dark"] .slot.no{ color:#fda4af; }
+  [data-theme="dark"] .tfbtn.no{ background:#3a1620; }
+  [data-theme="dark"] .chev{ color:#475569; }
+  [data-theme="dark"] .theme-toggle{ background:rgba(255,255,255,.16); }
 </style>
 </head>
 <body>
@@ -4876,7 +4914,19 @@ function speak(t){
 function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 
 let view="home", cat=null, mock=null;
-const APP_VERSION="v1.4";
+const APP_VERSION="v1.5";
+function applyTheme(){
+  let t; try{ t=localStorage.getItem("theme"); }catch(e){}
+  if(!t) t = (window.matchMedia && matchMedia("(prefers-color-scheme:dark)").matches) ? "dark":"light";
+  document.documentElement.setAttribute("data-theme", t==="dark"?"dark":"light");
+}
+function toggleTheme(){
+  const now=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";
+  document.documentElement.setAttribute("data-theme", now);
+  try{ localStorage.setItem("theme", now); }catch(e){}
+  render();
+}
+applyTheme();
 const app=document.getElementById("app");
 
 /* ============================================================
@@ -4894,6 +4944,7 @@ function render(){
 
 function home(){
   const r=readiness();
+  const dark=document.documentElement.getAttribute("data-theme")==="dark";
   const hdr=$(`<div class="hdr">
     <div class="brand">🎓 Ελληνική Ιθαγένεια</div>
     <h1>Καλημέρα! 👋</h1>
@@ -4902,6 +4953,8 @@ function home(){
       <div><div style="opacity:.92">Ετοιμότητα για την εξέταση</div>
       <div class="pill">🔥 ${P.streak} ${P.streak===1?"μέρα":"μέρες"} σερί</div></div>
     </div></div>`);
+  const tt=$(`<button class="theme-toggle" title="Εναλλαγή θέματος">${dark?"☀️":"🌙"}</button>`);
+  tt.onclick=toggleTheme; hdr.appendChild(tt);
   app.appendChild(hdr);
 
   const wrap=$(`<div class="pad"></div>`);
