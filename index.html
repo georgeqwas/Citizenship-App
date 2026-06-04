@@ -3495,7 +3495,7 @@ function openCard(q,next){
   box.appendChild(qhead(q,true));
   const reveal=$(`<button class="btn btn-primary">Δείξε την απάντηση</button>`);
   reveal.onclick=()=>{
-    box.removeChild(reveal);
+    reveal.remove();
     const r=$(`<div class="reveal"><div class="lbl">ΕΠΙΣΗΜΗ ΑΠΑΝΤΗΣΗ</div><div class="ans">${esc(q.answerText)}</div></div>`);
     const lb=$(`<button class="listen" style="margin-top:8px">🔊</button>`); lb.onclick=()=>speak(q.answerText); r.appendChild(lb);
     box.appendChild(r);
