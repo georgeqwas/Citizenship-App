@@ -126,6 +126,10 @@
   [data-theme="dark"] .map-wrap{background:#0c344e}
   [data-theme="dark"] .btn-skip{ color:#94a3b8; border-color:#334155; }
   [data-theme="dark"] .gr-map path{fill:#36425e; stroke:#55617e}
+  /* dark base fill above has equal specificity to .gr-map path.ok/.no and comes later,
+     so it would override the green/red. These dark-mode rules restore the feedback colours. */
+  [data-theme="dark"] .gr-map path.ok{fill:#34c759}
+  [data-theme="dark"] .gr-map path.no{fill:#ff5a4d}
   .blank-in{display:inline-block; min-width:90px; width:120px; border:none; border-bottom:2px solid var(--sky); background:#f0f9ff; color:var(--ink); font-size:16px; font-weight:600; padding:2px 6px; margin:0 2px; border-radius:6px 6px 0 0; outline:none}
   .blank-in:focus{background:#e0f2fe}
   .blank-in.ok{background:var(--okbg); color:var(--ok); border-bottom-color:var(--ok)}
@@ -6099,7 +6103,7 @@ function speak(t){
 function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 
 let view="home", cat=null, mock=null;
-const APP_VERSION="v1.15";
+const APP_VERSION="v1.16";
 function applyTheme(){
   let t; try{ t=localStorage.getItem("theme"); }catch(e){}
   if(!t) t = (window.matchMedia && matchMedia("(prefers-color-scheme:dark)").matches) ? "dark":"light";
