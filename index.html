@@ -108,8 +108,6 @@
   .map-tools{display:flex; gap:8px; align-items:center; margin:6px 0}
   .map-tools button{width:42px; height:42px; border-radius:10px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font-size:22px; font-weight:700; cursor:pointer; line-height:1}
   .map-tools button:active{background:var(--okbg)}
-  .btn-skip{display:block; width:100%; margin-top:14px; padding:11px 12px; border:1.5px dashed var(--line); background:transparent; color:var(--mut); border-radius:12px; font-size:15px; font-weight:600; cursor:pointer}
-  .btn-skip:active{background:var(--okbg)}
   .map-hint{font-size:12px; opacity:.6}
   .map-wrap{position:relative; width:100%; overflow:hidden; margin:6px 0; border-radius:14px; background:#cfe8ff; touch-action:none; user-select:none; -webkit-user-select:none; cursor:grab}
   .map-wrap.grabbing{cursor:grabbing}
@@ -124,7 +122,6 @@
   .mchip.done{background:var(--okbg); color:var(--ok); border-color:var(--ok)}
   .map-attrib{font-size:11px; opacity:.55; margin-top:10px}
   [data-theme="dark"] .map-wrap{background:#0c344e}
-  [data-theme="dark"] .btn-skip{ color:#94a3b8; border-color:#334155; }
   [data-theme="dark"] .gr-map path{fill:#36425e; stroke:#55617e}
   /* dark base fill above has equal specificity to .gr-map path.ok/.no and comes later,
      so it would override the green/red. These dark-mode rules restore the feedback colours. */
@@ -1217,9 +1214,12 @@ window.QUESTIONS = [
     "id": "geo_043"
   },
   {
-    "type": "open",
-    "q": "Αντιστοιχίστε τις δύο στήλες: Στήλη I: Ποταμοί και κάθε λίμνη στη Στήλη II: Λίμνες.",
-    "answerText": "Στήλη Ι Ποταμοί Στήλη ΙΙ Λίμνες Αλιάκμονας Κερκίνη Πηνειός Τριχωνίδα Έβρος Βιστωνίδα Αχελώος Κορώνεια",
+    "type": "categorize",
+    "q": "Κατάταξε κάθε όνομα στη σωστή στήλη — Ποταμοί ή Λίμνες:",
+    "cats": [["Α", "Ποταμοί"], ["Β", "Λίμνες"]],
+    "items": [[1, "Κερκίνη"], [2, "Αλιάκμονας"], [3, "Τριχωνίδα"], [4, "Πηνειός"], [5, "Έβρος"], [6, "Βιστωνίδα"], [7, "Κορώνεια"], [8, "Αχελώος"]],
+    "answer": [[1, "Β"], [2, "Α"], [3, "Β"], [4, "Α"], [5, "Α"], [6, "Β"], [7, "Β"], [8, "Α"]],
+    "answerText": "Ποταμοί: Αλιάκμονας, Πηνειός, Έβρος, Αχελώος  ·  Λίμνες: Κερκίνη, Τριχωνίδα, Βιστωνίδα, Κορώνεια",
     "cat": "geography",
     "id": "geo_044"
   },
@@ -3963,9 +3963,12 @@ window.QUESTIONS = [
     "id": "his_058"
   },
   {
-    "type": "open",
-    "q": "Αντιστοιχίστε τους όρους της στήλης Ι με τους όρους της στήλης ΙΙ: ΣΤΗΛΗ Ι ΣΤΗΛΗ ΙΙ 1 Γλυπτά του Παρθενώνα Α Βυζάντιο 2 Υγρό Πυρ Β Ελληνική Επανάσταση 3 Σύνθημα «Ελευθερία ή Θάνατος» Γ Ελληνική Ιστορία 20ου αιώνα 4 Κατοχή και Αντίσταση Δ Αρχαία Αθήνα",
-    "answerText": "1Δ, 2Α, 3Β, 4Γ",
+    "type": "match",
+    "q": "Αντιστοίχισε τους όρους της στήλης Ι με τη στήλη ΙΙ:",
+    "left": [[1, "Γλυπτά του Παρθενώνα"], [2, "Υγρό Πυρ"], [3, "Σύνθημα «Ελευθερία ή Θάνατος»"], [4, "Κατοχή και Αντίσταση"]],
+    "right": [["Α", "Βυζάντιο"], ["Β", "Ελληνική Επανάσταση"], ["Γ", "Ελληνική Ιστορία 20ου αιώνα"], ["Δ", "Αρχαία Αθήνα"]],
+    "pairs": [[1, "Δ"], [2, "Α"], [3, "Β"], [4, "Γ"]],
+    "answerText": "Γλυπτά του Παρθενώνα → Αρχαία Αθήνα  ·  Υγρό Πυρ → Βυζάντιο  ·  Σύνθημα «Ελευθερία ή Θάνατος» → Ελληνική Επανάσταση  ·  Κατοχή και Αντίσταση → Ελληνική Ιστορία 20ου αιώνα",
     "cat": "history",
     "id": "his_059"
   },
@@ -6103,7 +6106,7 @@ function speak(t){
 function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 
 let view="home", cat=null, mock=null;
-const APP_VERSION="v1.16";
+const APP_VERSION="v1.17";
 function applyTheme(){
   let t; try{ t=localStorage.getItem("theme"); }catch(e){}
   if(!t) t = (window.matchMedia && matchMedia("(prefers-color-scheme:dark)").matches) ? "dark":"light";
@@ -6234,7 +6237,7 @@ function renderStudy(){
   w.appendChild(bar);
   w.appendChild(card(q, ()=>{ sIdx=(sIdx+1)%sOrder.length; renderStudy(); }));
   if(sOrder.length>1){
-    const skip=$(`<button class="btn-skip">Παράλειψη — θα επανέλθει αργότερα ›</button>`);
+    const skip=$(`<button class="btn btn-primary" style="margin-top:14px">Παράλειψη</button>`);
     skip.onclick=()=>{
       const wasLast = sIdx===sOrder.length-1;
       const [qq]=sOrder.splice(sIdx,1);   // pull the current question out…
