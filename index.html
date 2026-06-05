@@ -108,9 +108,13 @@
   .map-tools{display:flex; gap:8px; align-items:center; margin:6px 0}
   .map-tools button{width:42px; height:42px; border-radius:10px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font-size:22px; font-weight:700; cursor:pointer; line-height:1}
   .map-tools button:active{background:var(--okbg)}
+  .btn-skip{display:block; width:100%; margin-top:14px; padding:11px 12px; border:1.5px dashed var(--line); background:transparent; color:var(--mut); border-radius:12px; font-size:15px; font-weight:600; cursor:pointer}
+  .btn-skip:active{background:var(--okbg)}
   .map-hint{font-size:12px; opacity:.6}
-  .map-wrap{width:100%; max-height:72vh; overflow:auto; margin:6px 0; border-radius:14px; background:#cfe8ff; -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y}
-  .map-wrap svg{display:block; width:100%; height:auto; transition:width .15s}
+  .map-wrap{position:relative; width:100%; overflow:hidden; margin:6px 0; border-radius:14px; background:#cfe8ff; touch-action:none; user-select:none; -webkit-user-select:none; cursor:grab}
+  .map-wrap.grabbing{cursor:grabbing}
+  .map-pan{width:100%; transform-origin:0 0; will-change:transform}
+  .map-wrap svg{display:block; width:100%; height:auto}
   .gr-map path{fill:#e9e2cf; stroke:#b0a48c; stroke-width:0.6; cursor:pointer; transition:fill .1s}
   .gr-map path.ok{fill:#34c759}
   .gr-map path.no{fill:#ff5a4d}
@@ -120,6 +124,7 @@
   .mchip.done{background:var(--okbg); color:var(--ok); border-color:var(--ok)}
   .map-attrib{font-size:11px; opacity:.55; margin-top:10px}
   [data-theme="dark"] .map-wrap{background:#0c344e}
+  [data-theme="dark"] .btn-skip{ color:#94a3b8; border-color:#334155; }
   [data-theme="dark"] .gr-map path{fill:#36425e; stroke:#55617e}
   .blank-in{display:inline-block; min-width:90px; width:120px; border:none; border-bottom:2px solid var(--sky); background:#f0f9ff; color:var(--ink); font-size:16px; font-weight:600; padding:2px 6px; margin:0 2px; border-radius:6px 6px 0 0; outline:none}
   .blank-in:focus{background:#e0f2fe}
@@ -6094,7 +6099,7 @@ function speak(t){
 function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 
 let view="home", cat=null, mock=null;
-const APP_VERSION="v1.13";
+const APP_VERSION="v1.15";
 function applyTheme(){
   let t; try{ t=localStorage.getItem("theme"); }catch(e){}
   if(!t) t = (window.matchMedia && matchMedia("(prefers-color-scheme:dark)").matches) ? "dark":"light";
@@ -6224,6 +6229,17 @@ function renderStudy(){
   const bar=$(`<div class="bar" style="margin-bottom:20px"><i style="width:${(sIdx+1)/sOrder.length*100}%; background:var(--sky)"></i></div>`);
   w.appendChild(bar);
   w.appendChild(card(q, ()=>{ sIdx=(sIdx+1)%sOrder.length; renderStudy(); }));
+  if(sOrder.length>1){
+    const skip=$(`<button class="btn-skip">Παράλειψη — θα επανέλθει αργότερα ›</button>`);
+    skip.onclick=()=>{
+      const wasLast = sIdx===sOrder.length-1;
+      const [qq]=sOrder.splice(sIdx,1);   // pull the current question out…
+      sOrder.push(qq);                     // …and re-queue it at the end so it returns later
+      if(wasLast) sIdx=0;                  // if it was the last, wrap to the start
+      renderStudy();
+    };
+    w.appendChild(skip);
+  }
   app.appendChild(w);
   renderNav();
 }
@@ -6676,7 +6692,7 @@ function attribLine(){
 }
 /* Overlay transparent, click-forwarding circles on tiny island units so they're
    easy to tap (the halo is in SVG units, so it grows with zoom). Visual map unchanged. */
-function addHaloHits(svg){
+function addHaloHits(svg, onHalo){
   if(!svg || svg._haloed) return; svg._haloed=true;
   const NS="http://www.w3.org/2000/svg";
   const SMALL=22;   // units: treat a unit as "small" if its larger side < this
@@ -6693,9 +6709,90 @@ function addHaloHits(svg){
     h.setAttribute("fill","transparent");
     h.setAttribute("class","hit-halo");
     h.style.cursor="pointer";
-    h.addEventListener('click',e=>{ e.stopPropagation(); p.dispatchEvent(new MouseEvent('click',{bubbles:false})); });
+    h._unit=p;   // the map interaction engine resolves a tapped halo to this unit path
+    if(onHalo) h.addEventListener('click', e=>{ e.stopPropagation(); onHalo(p); });
     svg.appendChild(h);
   });
+}
+
+/* Pan/zoom/tap engine for the map. Two-finger pinch zoom, one-finger drag to pan,
+   wheel zoom on desktop, and tap detection that routes the tapped unit to onTap(pathEl).
+   Keeps the map's instant green/red feedback: a tap just colours the unit under the finger. */
+/* Pan/zoom engine. Transforms the PAN DIV (not the <svg> root — Safari/iOS renders CSS
+   transforms on the svg element unreliably, which broke both pinch and the live re-colouring
+   of regions). Selection itself stays on the units' own click handlers, so a tapped region
+   colours instantly; this engine only moves the map and tells the click handler to ignore the
+   click that follows a drag/pinch (via suppressed()). */
+function attachMapInteraction(wrap, pan, btns){
+  const view={scale:1, tx:0, ty:0};
+  let suppressUntil=0;
+  pan.style.transformOrigin="0 0";
+  const apply=()=>{ pan.style.transform=`translate(${view.tx}px,${view.ty}px) scale(${view.scale})`; };
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const clampApply=()=>{
+    const W=wrap.clientWidth, H=wrap.clientHeight;
+    view.tx=Math.min(0, Math.max(W*(1-view.scale), view.tx));
+    view.ty=Math.min(0, Math.max(H*(1-view.scale), view.ty));
+    apply();
+  };
+  function zoomAt(fx,fy,ns){
+    ns=clamp(ns,1,8);
+    const cx=(fx-view.tx)/view.scale, cy=(fy-view.ty)/view.scale;
+    view.tx=fx-cx*ns; view.ty=fy-cy*ns; view.scale=ns; clampApply();
+  }
+  const rect=()=>wrap.getBoundingClientRect();
+  const markMoved=()=>{ suppressUntil=Date.now()+450; };
+
+  // ---- touch: two-finger pinch + one-finger pan ----
+  let tDist=0, tScale=1, tFocus=null, tPan=null, tTx=0, tTy=0, tMoved=false, tMode=null;
+  wrap.addEventListener('touchstart',e=>{
+    if(e.touches.length>=2){
+      tMode='pinch'; tMoved=true;
+      const a=e.touches[0], b=e.touches[1], r=rect();
+      tDist=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)||1; tScale=view.scale;
+      tFocus={x:(a.clientX+b.clientX)/2-r.left, y:(a.clientY+b.clientY)/2-r.top};
+      markMoved(); e.preventDefault();
+    } else if(e.touches.length===1){
+      tMode='tap'; tMoved=false;
+      const t=e.touches[0]; tPan={x:t.clientX,y:t.clientY}; tTx=view.tx; tTy=view.ty;
+    }
+  },{passive:false});
+  wrap.addEventListener('touchmove',e=>{
+    if(tMode==='pinch' && e.touches.length>=2){
+      const a=e.touches[0], b=e.touches[1];
+      const d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)||1;
+      zoomAt(tFocus.x, tFocus.y, tScale*(d/tDist)); markMoved(); e.preventDefault();
+    } else if(tPan && e.touches.length===1){
+      const t=e.touches[0], dx=t.clientX-tPan.x, dy=t.clientY-tPan.y;
+      if(Math.abs(dx)+Math.abs(dy)>8){ tMoved=true; tMode='pan'; markMoved(); wrap.classList.add('grabbing'); }
+      if(view.scale>1 && tMoved){ view.tx=tTx+dx; view.ty=tTy+dy; clampApply(); e.preventDefault(); }
+    }
+  },{passive:false});
+  const tEnd=e=>{ if(tMoved) markMoved(); if(!e.touches||e.touches.length===0){ tMode=null; tPan=null; tMoved=false; wrap.classList.remove('grabbing'); } };
+  wrap.addEventListener('touchend',tEnd);
+  wrap.addEventListener('touchcancel',tEnd);
+
+  // ---- mouse (desktop): drag pan + wheel zoom ----
+  let mDown=false, mStart=null, mTx=0, mTy=0, mMoved=false;
+  wrap.addEventListener('mousedown',e=>{ mDown=true; mMoved=false; mStart={x:e.clientX,y:e.clientY}; mTx=view.tx; mTy=view.ty; });
+  wrap.addEventListener('mousemove',e=>{
+    if(!mDown) return;
+    const dx=e.clientX-mStart.x, dy=e.clientY-mStart.y;
+    if(Math.abs(dx)+Math.abs(dy)>6){ mMoved=true; markMoved(); wrap.classList.add('grabbing'); }
+    if(view.scale>1 && mMoved){ view.tx=mTx+dx; view.ty=mTy+dy; clampApply(); }
+  });
+  const mUp=()=>{ if(mMoved) markMoved(); mDown=false; wrap.classList.remove('grabbing'); };
+  wrap.addEventListener('mouseup',mUp);
+  wrap.addEventListener('mouseleave',mUp);
+  wrap.addEventListener('wheel',e=>{ e.preventDefault(); const r=rect(); zoomAt(e.clientX-r.left,e.clientY-r.top, view.scale*Math.exp(-e.deltaY*0.0015)); },{passive:false});
+
+  if(btns){
+    const ctr=()=>{ const r=rect(); return [r.width/2,r.height/2]; };
+    btns.plus  && (btns.plus.onclick =()=>{ const c=ctr(); zoomAt(c[0],c[1],view.scale+0.6); });
+    btns.minus && (btns.minus.onclick=()=>{ const c=ctr(); zoomAt(c[0],c[1],view.scale-0.6); });
+    btns.reset && (btns.reset.onclick=()=>{ view.scale=1; view.tx=0; view.ty=0; apply(); });
+  }
+  return { view, suppressed:()=>Date.now()<suppressUntil };
 }
 
 function mapCard(q,next){
@@ -6707,40 +6804,43 @@ function mapCard(q,next){
   const bMinus=$(`<button aria-label="zoom out">−</button>`);
   const bReset=$(`<button aria-label="reset" style="font-size:16px">⟲</button>`);
   const bPlus=$(`<button aria-label="zoom in">+</button>`);
-  const hint=$(`<span class="map-hint">Κάνε ζουμ και σύρε τον χάρτη</span>`);
+  const hint=$(`<span class="map-hint">Τσίμπησε για ζουμ · σύρε για μετακίνηση</span>`);
   tools.appendChild(bMinus); tools.appendChild(bReset); tools.appendChild(bPlus); tools.appendChild(hint);
 
   const wrap=$(`<div class="map-wrap"></div>`);
-  wrap.innerHTML=window.GREECE_SVG||"";
-  const svg=wrap.querySelector('svg');
-  let zoom=1;
-  const setZoom=z=>{ zoom=Math.max(1,Math.min(6,Math.round(z*10)/10)); svg.style.width=(zoom*100)+'%'; };
-  bPlus.onclick=()=>setZoom(zoom+0.6);
-  bMinus.onclick=()=>setZoom(zoom-0.6);
-  bReset.onclick=()=>setZoom(1);
-  // Enlarge tap targets for the smallest islands (transparent halos forward clicks).
-  requestAnimationFrame(()=>addHaloHits(svg));
+  const pan=$(`<div class="map-pan"></div>`);
+  pan.innerHTML=window.GREECE_SVG||"";
+  wrap.appendChild(pan);
+  const svg=pan.querySelector('svg');
 
   const status=$(`<div class="map-status"></div>`);
   const legend=$(`<div class="map-legend"></div>`);
   box.appendChild(tools); box.appendChild(wrap); box.appendChild(status); box.appendChild(legend);
   const sget=id=>svg.querySelector('#'+id);
   const U=window.GREECE_UNITS||{};
-  const nmeOf=p=> (U[p.id.slice(1)]||"").replace(/\b\w/g,c=>c); // greek genitive already
+  const eng=attachMapInteraction(wrap, pan, {plus:bPlus,minus:bMinus,reset:bReset});
+
+  // Wire up selection: a tap on a unit (or its halo) runs onTap, unless it was the
+  // tail of a drag/pinch gesture. Native clicks keep the instant green/red colouring rock-solid.
+  function wireTaps(onTap){
+    const tap=p=>{ if(eng.suppressed()) return; onTap(p); };
+    svg.querySelectorAll('path').forEach(p=>p.addEventListener('click',()=>tap(p)));
+    requestAnimationFrame(()=>addHaloHits(svg, tap));
+    box.appendChild(attribLine());
+    return box;
+  }
 
   if(q.mode==="pickN"){
     const acc=new Set(q.accept); let found=0, errors=0, fin=false;
     status.textContent=`Βρες ${q.n} — πάτησέ τες στον χάρτη.`;
-    svg.querySelectorAll('path').forEach(p=>p.addEventListener('click',()=>{
+    return wireTaps(p=>{
       if(fin||p.classList.contains('ok')||p.classList.contains('no')) return;
       if(acc.has(p.id)){ p.classList.add('ok'); found++; status.textContent=`Βρέθηκαν ${found}/${q.n}`; }
       else { p.classList.add('no'); errors++; status.textContent=`Λάθος: ${U[p.id.slice(1)]||''}`; }
       if(found>=q.n){ fin=true; record(q.id, errors===0);
         legend.appendChild($(`<div class="corr ${errors===0?'ok-note':''}">Αποδεκτές: ${esc(q.answerText)}</div>`));
         box.appendChild(nextBtn(next)); }
-    }));
-    box.appendChild(attribLine());
-    return box;
+    });
   }
 
   // locate mode — every tap immediately green (a target) or red (not)
@@ -6754,7 +6854,7 @@ function mapCard(q,next){
   }
   const c2t={};
   targets.forEach(t=>t.codes.forEach(c=>{(c2t[c]=c2t[c]||[]).push(t);}));
-  svg.querySelectorAll('path').forEach(p=>p.addEventListener('click',()=>{
+  return wireTaps(p=>{
     if(done===targets.length) return;
     if(p.classList.contains('no')) return;            // already-wrong stays wrong
     const ts=(c2t[p.id]||[]).filter(t=>!t.hit);
@@ -6773,9 +6873,7 @@ function mapCard(q,next){
       status.textContent = errors===0 ? 'Τέλεια — όλα σωστά!' : `Ολοκληρώθηκε (${errors} λάθος).`;
       box.appendChild(nextBtn(next));
     }
-  }));
-  box.appendChild(attribLine());
-  return box;
+  });
 }
 
 function nextBtn(next){
