@@ -79,6 +79,20 @@
   .count{margin-left:auto; font-size:14px; color:var(--mut)}
   /* interactive fill + list + match */
   .qimg{display:block; max-width:100%; max-height:340px; margin:4px auto 16px; border-radius:12px; border:1px solid var(--line); background:#fff}
+  /* multi-image MCQ (picture-answer) */
+  .imgrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:6px 0 8px}
+  .imgopt{position:relative; border:2.5px solid var(--line); background:#fff; border-radius:14px; padding:8px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px}
+  .imgopt img{width:100%; height:150px; object-fit:contain; border-radius:8px; pointer-events:none}
+  .imgopt .lab{font-size:15px; font-weight:800; color:var(--mut)}
+  .imgopt .mark{position:absolute; top:6px; right:9px; font-size:22px; font-weight:900; line-height:1}
+  .imgopt.sel{border-color:var(--sky); background:#f0f9ff}
+  .imgopt.ok{border-color:#34d399; background:var(--okbg)}
+  .imgopt.ok .lab{color:#065f46}
+  .imgopt.no{border-color:#fb7185; background:var(--nobg)}
+  .imgopt.no .lab{color:#9f1239}
+  .imgopt.dim{opacity:.45}
+  .imgopt.miss{border-color:#34d399; border-style:dashed}
+  .multihint{font-size:14px; color:var(--mut); margin:2px 0 12px}
   .fill-sentence{font-size:18px; line-height:2.2; margin:6px 0 18px}
   .fill-line{display:block; margin-bottom:10px; line-height:2}
   .slot{display:inline-block; min-width:62px; text-align:center; border-bottom:2px dashed var(--sky); background:#f0f9ff; color:var(--ink); font-size:16px; font-weight:600; padding:2px 8px; margin:0 2px; border-radius:6px 6px 0 0; cursor:pointer}
@@ -91,14 +105,16 @@
   .chip.sel{border-color:var(--sky); background:#e0f2fe; color:var(--sky)}
   .chip.dragging{opacity:.35}
   .chip.ghost{position:fixed; transform:translate(-50%,-50%); pointer-events:none; z-index:9999; box-shadow:0 8px 24px rgba(2,132,199,.35); border-color:var(--sky); color:var(--sky); background:#e0f2fe}
-  .map-wrap{width:100%; margin:8px 0; border-radius:14px; overflow:hidden; background:#cfe8ff}
-  .map-wrap svg{display:block; width:100%; height:auto}
-  .gr-map path{fill:#e9e2cf; stroke:#b0a48c; stroke-width:0.6; cursor:pointer; transition:fill .12s}
-  .gr-map path:active{fill:#cfc09a}
-  .gr-map path.sel{fill:#5ab0ff}
+  .map-tools{display:flex; gap:8px; align-items:center; margin:6px 0}
+  .map-tools button{width:42px; height:42px; border-radius:10px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font-size:22px; font-weight:700; cursor:pointer; line-height:1}
+  .map-tools button:active{background:var(--okbg)}
+  .map-hint{font-size:12px; opacity:.6}
+  .map-wrap{width:100%; max-height:72vh; overflow:auto; margin:6px 0; border-radius:14px; background:#cfe8ff; -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y}
+  .map-wrap svg{display:block; width:100%; height:auto; transition:width .15s}
+  .gr-map path{fill:#e9e2cf; stroke:#b0a48c; stroke-width:0.6; cursor:pointer; transition:fill .1s}
   .gr-map path.ok{fill:#34c759}
   .gr-map path.no{fill:#ff5a4d}
-  .map-status{font-weight:700; margin:6px 0; min-height:20px}
+  .map-status{font-weight:700; margin:6px 0; min-height:22px}
   .map-legend{display:flex; flex-wrap:wrap; gap:8px; margin:8px 0}
   .mchip{border:1.5px solid var(--line); border-radius:999px; padding:5px 12px; font-size:14px; font-weight:600}
   .mchip.done{background:var(--okbg); color:var(--ok); border-color:var(--ok)}
@@ -170,6 +186,13 @@
   [data-theme="dark"] .slbtn, [data-theme="dark"] .catbtn{ background:#1e293b; }
   [data-theme="dark"] .slbtn.ok, [data-theme="dark"] .catbtn.ok{ background:#0c2e25; color:#6ee7b7; border-color:#34d399; }
   [data-theme="dark"] .slbtn.no, [data-theme="dark"] .catbtn.no{ background:#3a1620; color:#fda4af; border-color:#fb7185; }
+  [data-theme="dark"] .imgopt{ background:#1e293b; border-color:#334155; }
+  [data-theme="dark"] .imgopt img{ background:#0f172a; }
+  [data-theme="dark"] .imgopt.sel{ background:#0c2733; border-color:#38bdf8; }
+  [data-theme="dark"] .imgopt.ok{ background:#0c2e25; border-color:#34d399; }
+  [data-theme="dark"] .imgopt.ok .lab{ color:#6ee7b7; }
+  [data-theme="dark"] .imgopt.no{ background:#3a1620; border-color:#fb7185; }
+  [data-theme="dark"] .imgopt.no .lab{ color:#fda4af; }
   [data-theme="dark"] .chev{ color:#475569; }
   [data-theme="dark"] .theme-toggle{ background:rgba(255,255,255,.16); }
 </style>
@@ -2898,6 +2921,30 @@ window.QUESTIONS = [
     "id": "cul_067"
   },
   {
+    "type": "imgmcq",
+    "q": "Ποιες από τις φωτογραφίες ανήκουν σε έργα τέχνης του Κυκλαδικού πολιτισμού;",
+    "imgs": ["cul_t9_A.jpg", "cul_t9_B.jpg", "cul_t9_C.jpg", "cul_t9_D.jpg"],
+    "answer": [1, 2],
+    "cat": "culture",
+    "id": "cul_supp_68"
+  },
+  {
+    "type": "imgmcq",
+    "q": "Ποιες από τις φωτογραφίες σχετίζονται με τον Μινωικό πολιτισμό;",
+    "imgs": ["cul_t10_A.jpg", "cul_t10_B.jpg", "cul_t10_C.jpg", "cul_t10_D.jpg"],
+    "answer": [0, 3],
+    "cat": "culture",
+    "id": "cul_supp_69"
+  },
+  {
+    "type": "imgmcq",
+    "q": "Ποια από τις παρακάτω μορφές απεικονίζει τον βασιλέα της Μακεδονίας Αλέξανδρο τον Μέγα;",
+    "imgs": ["cul_t18_A.jpg", "cul_t18_B.jpg", "cul_t18_C.jpg", "cul_t18_D.jpg"],
+    "answer": [1],
+    "cat": "culture",
+    "id": "cul_supp_70"
+  },
+  {
     "type": "mcq",
     "q": "Η Βυζαντινή Αυτοκρατορία ήταν:",
     "options": [
@@ -3409,6 +3456,20 @@ window.QUESTIONS = [
     "type": "mcq",
     "q": "Ποιος είναι ο εικονιζόμενος;",
     "options": [
+      "Ίων Δραγούμης",
+      "Ελευθέριος Βενιζέλος",
+      "Χαρίλαος Τρικούπης",
+      "Θεόδωρος Δηλιγιάννης"
+    ],
+    "answer": 0,
+    "cat": "history",
+    "id": "his_040",
+    "img": "his_040.jpg"
+  },
+  {
+    "type": "mcq",
+    "q": "Ποιος είναι ο εικονιζόμενος;",
+    "options": [
       "Αθανάσιος Διάκος",
       "Γεώργιος Καραϊσκάκης",
       "Θεόδωρος Κολοκοτρώνης",
@@ -3416,8 +3477,36 @@ window.QUESTIONS = [
     ],
     "answer": 0,
     "cat": "history",
-    "id": "his_040",
-    "img": "his_040.jpg"
+    "id": "his_041",
+    "img": "his_041.jpg"
+  },
+  {
+    "type": "mcq",
+    "q": "Ποιος είναι ο εικονιζόμενος;",
+    "options": [
+      "Αθανάσιος Διάκος",
+      "Γεώργιος Καραϊσκάκης",
+      "Θεόδωρος Κολοκοτρώνης",
+      "Οδυσσέας Ανδρούτσος"
+    ],
+    "answer": 1,
+    "cat": "history",
+    "id": "his_042",
+    "img": "his_042.jpg"
+  },
+  {
+    "type": "mcq",
+    "q": "Ποιος είναι ο εικονιζόμενος;",
+    "options": [
+      "Αθανάσιος Διάκος",
+      "Γεώργιος Καραϊσκάκης",
+      "Θεόδωρος Κολοκοτρώνης",
+      "Οδυσσέας Ανδρούτσος"
+    ],
+    "answer": 3,
+    "cat": "history",
+    "id": "his_043",
+    "img": "his_043.jpg"
   },
   {
     "type": "mcq",
@@ -3430,8 +3519,8 @@ window.QUESTIONS = [
     ],
     "answer": 2,
     "cat": "history",
-    "id": "his_041",
-    "img": "his_041.jpg"
+    "id": "his_044",
+    "img": "his_044.jpg"
   },
   {
     "type": "mcq",
@@ -3444,8 +3533,8 @@ window.QUESTIONS = [
     ],
     "answer": 2,
     "cat": "history",
-    "id": "his_042",
-    "img": "his_042.jpg"
+    "id": "his_045",
+    "img": "his_045.jpg"
   },
   {
     "type": "mcq",
@@ -3458,8 +3547,8 @@ window.QUESTIONS = [
     ],
     "answer": 1,
     "cat": "history",
-    "id": "his_043",
-    "img": "his_043.jpg"
+    "id": "his_046",
+    "img": "his_046.jpg"
   },
   {
     "type": "mcq",
@@ -3472,8 +3561,8 @@ window.QUESTIONS = [
     ],
     "answer": 2,
     "cat": "history",
-    "id": "his_044",
-    "img": "his_044.jpg"
+    "id": "his_047",
+    "img": "his_047.jpg"
   },
   {
     "type": "mcq",
@@ -3486,8 +3575,8 @@ window.QUESTIONS = [
     ],
     "answer": 1,
     "cat": "history",
-    "id": "his_045",
-    "img": "his_045.jpg"
+    "id": "his_048",
+    "img": "his_048.jpg"
   },
   {
     "type": "mcq",
@@ -3500,8 +3589,8 @@ window.QUESTIONS = [
     ],
     "answer": 0,
     "cat": "history",
-    "id": "his_046",
-    "img": "his_046.jpg"
+    "id": "his_049",
+    "img": "his_049.jpg"
   },
   {
     "type": "mcq",
@@ -3514,8 +3603,8 @@ window.QUESTIONS = [
     ],
     "answer": 3,
     "cat": "history",
-    "id": "his_047",
-    "img": "his_047.jpg"
+    "id": "his_050",
+    "img": "his_050.jpg"
   },
   {
     "type": "mcq",
@@ -3528,8 +3617,8 @@ window.QUESTIONS = [
     ],
     "answer": 0,
     "cat": "history",
-    "id": "his_048",
-    "img": "his_048.jpg"
+    "id": "his_051",
+    "img": "his_051.jpg"
   },
   {
     "type": "mcq",
@@ -3542,8 +3631,8 @@ window.QUESTIONS = [
     ],
     "answer": 2,
     "cat": "history",
-    "id": "his_049",
-    "img": "his_049.jpg"
+    "id": "his_052",
+    "img": "his_052.jpg"
   },
   {
     "type": "mcq",
@@ -3556,8 +3645,8 @@ window.QUESTIONS = [
     ],
     "answer": 1,
     "cat": "history",
-    "id": "his_050",
-    "img": "his_050.jpg"
+    "id": "his_053",
+    "img": "his_053.jpg"
   },
   {
     "type": "match",
@@ -3618,7 +3707,7 @@ window.QUESTIONS = [
     ],
     "answerText": "Αθανάσιος Διάκος → Μάχη της Αλαμάνας  ·  Οδυσσέας Ανδρούτσος → Χάνι της Γραβιάς  ·  Γεώργιος Καραϊσκάκης → Μάχη του Φαλήρου  ·  Θεόδωρος Κολοκοτρώνης → Απελευθέρωση της Τριπολιτσάς",
     "cat": "history",
-    "id": "his_051"
+    "id": "his_054"
   },
   {
     "type": "match",
@@ -3679,7 +3768,7 @@ window.QUESTIONS = [
     ],
     "answerText": "1941-1944 → Κατοχή από τις δυνάμεις του  ·  1863-1913 → Περίοδος Βασιλείας Γεωργίου Α΄  ·  1919-1922 → Μικρασιατική Εκστρατεία  ·  1833-1862 → Περίοδος διακυβέρνησης του",
     "cat": "history",
-    "id": "his_052"
+    "id": "his_055"
   },
   {
     "type": "match",
@@ -3740,7 +3829,7 @@ window.QUESTIONS = [
     ],
     "answerText": "502-449 π.Χ. → Περσικοί Πόλεμοι  ·  330-1453 μ.Χ. → Βυζαντινή περίοδος  ·  1453-1821 μ.Χ. → Τουρκοκρατία  ·  1946-1949 μ.Χ. → Εμφύλιος Πόλεμος",
     "cat": "history",
-    "id": "his_053"
+    "id": "his_056"
   },
   {
     "type": "match",
@@ -3801,7 +3890,7 @@ window.QUESTIONS = [
     ],
     "answerText": "Αρματολοί → Ανυπότακτοι στους Τούρκους  ·  Φαναριώτες → Έλληνες άρχοντες της  ·  Πατριάρχης → Επικεφαλής της Ορθόδοξης  ·  Δημογέροντες → Κοινοτικοί Άρχοντες",
     "cat": "history",
-    "id": "his_054"
+    "id": "his_057"
   },
   {
     "type": "match",
@@ -3862,14 +3951,14 @@ window.QUESTIONS = [
     ],
     "answerText": "Δάσκαλοι του Γένους → Μορφωμένοι Έλληνες  ·  Οδησσός → Ελληνική παροικία  ·  Ρήγας Φεραίος → Νεοελληνικός Διαφωτισμός  ·  Αλή Πασάς → Ιωάννινα",
     "cat": "history",
-    "id": "his_055"
+    "id": "his_058"
   },
   {
     "type": "open",
     "q": "Αντιστοιχίστε τους όρους της στήλης Ι με τους όρους της στήλης ΙΙ: ΣΤΗΛΗ Ι ΣΤΗΛΗ ΙΙ 1 Γλυπτά του Παρθενώνα Α Βυζάντιο 2 Υγρό Πυρ Β Ελληνική Επανάσταση 3 Σύνθημα «Ελευθερία ή Θάνατος» Γ Ελληνική Ιστορία 20ου αιώνα 4 Κατοχή και Αντίσταση Δ Αρχαία Αθήνα",
     "answerText": "1Δ, 2Α, 3Β, 4Γ",
     "cat": "history",
-    "id": "his_056"
+    "id": "his_059"
   },
   {
     "type": "match",
@@ -3930,7 +4019,7 @@ window.QUESTIONS = [
     ],
     "answerText": "Μακεδονία → 1913  ·  Επτάνησα → 1864  ·  Δωδεκάνησα → 1948  ·  Θεσσαλία → 1881",
     "cat": "history",
-    "id": "his_057"
+    "id": "his_060"
   },
   {
     "type": "typefill",
@@ -3956,7 +4045,7 @@ window.QUESTIONS = [
     ],
     "answerText": "(1) Φίλιππος Β΄  (2) Κωνσταντίνος ΙΑ΄ Παλαιολόγος  (3) Αλέξανδρος Υψηλάντης  (4) Ιωάννης Καποδίστριας",
     "cat": "history",
-    "id": "his_058"
+    "id": "his_061"
   },
   {
     "type": "fill",
@@ -3988,7 +4077,7 @@ window.QUESTIONS = [
     ],
     "answerText": "(1) του Μαραθώνα  (2) του Ματζικέρτ  (3) της Αλαμάνας  (4) του Σαρανταπόρου",
     "cat": "history",
-    "id": "his_059"
+    "id": "his_062"
   },
   {
     "type": "typefill",
@@ -4014,7 +4103,7 @@ window.QUESTIONS = [
     ],
     "answerText": "(1) Άλωση  (2) Οθωμανούς  (3) Οθωμανική  (4) κεφαλικό",
     "cat": "history",
-    "id": "his_060"
+    "id": "his_063"
   },
   {
     "type": "typefill",
@@ -4040,7 +4129,7 @@ window.QUESTIONS = [
     ],
     "answerText": "(1) Πατριάρχης  (2) Δημήτριος Υψηλάντης  (3) Ιωάννης Καποδίστριας  (4) Παπαφλέσσας",
     "cat": "history",
-    "id": "his_061"
+    "id": "his_064"
   },
   {
     "type": "typefill",
@@ -4066,7 +4155,7 @@ window.QUESTIONS = [
     ],
     "answerText": "(1) Μαντείο  (2) Δελφούς  (3) Ολυμπιακούς  (4) Πένταθλο",
     "cat": "history",
-    "id": "his_062"
+    "id": "his_065"
   },
   {
     "type": "typefill",
@@ -4092,7 +4181,7 @@ window.QUESTIONS = [
     ],
     "answerText": "(1) O Όθωνας  (2) Χορηγία  (3) O Ιωάννης Καποδίστριας  (4) Ιουλιανά",
     "cat": "history",
-    "id": "his_063"
+    "id": "his_066"
   },
   {
     "type": "typefill",
@@ -4118,14 +4207,21 @@ window.QUESTIONS = [
     ],
     "answerText": "(1) Μεταπολίτευση  (2) Χρυσός Αιώνας  (3) Φιλελληνισμός  (4) Μακεδονικός Αγώνας",
     "cat": "history",
-    "id": "his_064"
+    "id": "his_067"
   },
   {
-    "type": "open",
-    "q": "Συμπληρώστε τα κενά με τις σωστές λέξεις: η Κωνσταντινούπολη, η Δημοκρατία, ο Όλυμπος, κράτος Η Ελλάδα έγινε ανεξάρτητο (1) __________το 1830. Το 1974 αποκαταστάθηκε στην Ελλάδα (2) ___________. (3)__________ ήταν το βουνό όπου κατοικούσαν οι 12 θεοί. Πρωτεύουσα της Βυζαντινής Αυτοκρατορίας ήταν (4) __________. ΑΠΑΝΤΗΣΗ: 1. κράτος 2. Η Δημοκρατία, 3. Ο Όλυμπος 4. η Κωνσταντινούπολη 1. Ο σπουδαίος Φιλέλληνας Λόρδος Βύρωνας πέθανε στο Μεσολόγγι το 1824. 2. Ο Βασιλιάς Γεώργιος Α’ δολοφονήθηκε στη Θεσσαλονίκη το 1913. 3. Έλληνες πρόσφυγες είχαν φθάσει στην Ελλάδα και πριν από τη Μικρασιατική Καταστροφή. 4. Η Θεσσαλονίκη ενσωματώθηκε στην Ελλάδα το 1830.",
-    "answerText": "1. Σ, 2. Σ, 3. Σ, 4. Λ",
+    "type": "fill",
+    "q": "Συμπλήρωσε τα κενά με τις σωστές λέξεις: η Κωνσταντινούπολη, η Δημοκρατία, ο Όλυμπος, κράτος",
+    "sentence": "Η Ελλάδα έγινε ανεξάρτητο ⟦1⟧ το 1830. Το 1974 αποκαταστάθηκε στην Ελλάδα ⟦2⟧. ⟦3⟧ ήταν το βουνό όπου κατοικούσαν οι 12 θεοί. Πρωτεύουσα της Βυζαντινής Αυτοκρατορίας ήταν ⟦4⟧.",
+    "bank": ["η Κωνσταντινούπολη", "η Δημοκρατία", "ο Όλυμπος", "κράτος"],
+    "blanks": [
+      [1, "κράτος"],
+      [2, "η Δημοκρατία"],
+      [3, "ο Όλυμπος"],
+      [4, "η Κωνσταντινούπολη"]
+    ],
     "cat": "history",
-    "id": "his_065"
+    "id": "his_068"
   },
   {
     "type": "tf",
@@ -4149,14 +4245,14 @@ window.QUESTIONS = [
       }
     ],
     "cat": "history",
-    "id": "his_066"
+    "id": "his_069"
   },
   {
     "type": "open",
     "q": "Αναφέρετε τον αριθμό της κάθε πρότασης σημειώνοντας Σ, αν η πρόταση που σας δίνεται παρακάτω είναι σωστή, ή Λ, αν είναι λάθος. 1. Εξαιτίας του Εμφυλίου Πολέμου περίπου 80.000 πολιτικοί πρόσφυγες κατέφυγαν σε χώρες της Ανατολικής Ευρώπης. 2. Μετά τον Πελοποννησιακό Πόλεμο στην Αθήνα επιβλήθηκε μία κυβέρνηση 40 ολιγαρχικών, που έμειναν γνωστοί ως οι 40 τύραννοι. 3. Ο Μέγας Αλέξανδρος δεν απέκτησε ποτέ παιδιά. 4. Οι αδελφοί Κύριλλος και Μεθόδιος, γνωστοί ως «εκχριστιανιστές των Σλάβων», ήταν Θεσσαλονικείς.",
     "answerText": "1. Σ, 2. Λ, 3. Λ, 4. Σ",
     "cat": "history",
-    "id": "his_067"
+    "id": "his_070"
   },
   {
     "type": "tf",
@@ -4180,7 +4276,7 @@ window.QUESTIONS = [
       }
     ],
     "cat": "history",
-    "id": "his_068"
+    "id": "his_071"
   },
   {
     "type": "tf",
@@ -4204,7 +4300,7 @@ window.QUESTIONS = [
       }
     ],
     "cat": "history",
-    "id": "his_069"
+    "id": "his_072"
   },
   {
     "type": "tf",
@@ -4228,7 +4324,7 @@ window.QUESTIONS = [
       }
     ],
     "cat": "history",
-    "id": "his_070"
+    "id": "his_073"
   },
   {
     "type": "tf",
@@ -4252,7 +4348,7 @@ window.QUESTIONS = [
       }
     ],
     "cat": "history",
-    "id": "his_071"
+    "id": "his_074"
   },
   {
     "type": "tf",
@@ -4276,7 +4372,7 @@ window.QUESTIONS = [
       }
     ],
     "cat": "history",
-    "id": "his_072"
+    "id": "his_075"
   },
   {
     "type": "tf",
@@ -4300,14 +4396,14 @@ window.QUESTIONS = [
       }
     ],
     "cat": "history",
-    "id": "his_073"
+    "id": "his_076"
   },
   {
     "type": "open",
     "q": "Αναφέρετε τον αριθμό της κάθε πρότασης σημειώνοντας Σ, αν η πρόταση που σας δίνεται παρακάτω είναι σωστή, ή Λ, αν είναι λάθος. 1. Ο φιλόσοφος Αριστοτέλης ήταν δάσκαλος του Μεγάλου Αλεξάνδρου. 2. Ο Πελοποννησιακός Πόλεμος ήταν μια μεγάλη πολεμική σύγκρουση την εποχή του Βυζαντίου. 3. Ο Ιουστινιανός ήταν ένας από τους σπουδαιότερους Αυτοκράτορες της Βυζαντινής Αυτοκρατορίας. 4. Η Ελλάδα ήταν το πρώτο ανεξάρτητο κράτος στα Βαλκάνια που δημιουργήθηκε το 1830. ΑΠΑΝΤΗΣΗ: 1. Σ, 2. Λ, 3. Σ , 4. Σ",
     "answerText": "1. Σ, 2.Λ.,3.Λ, 4.Σ.",
     "cat": "history",
-    "id": "his_074"
+    "id": "his_077"
   },
   {
     "type": "tf",
@@ -4331,7 +4427,55 @@ window.QUESTIONS = [
       }
     ],
     "cat": "history",
-    "id": "his_075"
+    "id": "his_078"
+  },
+  {
+    "type": "tf",
+    "q": "Σωστό ή Λάθος;",
+    "cat": "history",
+    "id": "his_supp_79",
+    "statements": [
+      {
+        "t": "Ο αρχαίος Έλληνας φιλόσοφος Σωκράτης καταδικάστηκε σε θάνατο και πέθανε πίνοντας το κώνειο, μια μορφή δηλητηρίου.",
+        "a": true
+      },
+      {
+        "t": "Η αρχαία πόλη των Συρακουσών βρισκόταν στην Πελοπόννησο.",
+        "a": false
+      },
+      {
+        "t": "Η πρωτεύουσα της Αρχαίας Μακεδονίας ήταν η Θήβα.",
+        "a": false
+      },
+      {
+        "t": "Στους Δελφούς υπήρχε το πιο γνωστό μαντείο της Αρχαιότητας.",
+        "a": true
+      }
+    ]
+  },
+  {
+    "type": "tf",
+    "q": "Σωστό ή Λάθος;",
+    "cat": "history",
+    "id": "his_supp_80",
+    "statements": [
+      {
+        "t": "Ο σπουδαίος Φιλέλληνας Λόρδος Βύρωνας πέθανε στο Μεσολόγγι το 1824.",
+        "a": true
+      },
+      {
+        "t": "Ο Βασιλιάς Γεώργιος Α΄ δολοφονήθηκε στη Θεσσαλονίκη το 1913.",
+        "a": true
+      },
+      {
+        "t": "Έλληνες πρόσφυγες είχαν φθάσει στην Ελλάδα και πριν από τη Μικρασιατική Καταστροφή.",
+        "a": true
+      },
+      {
+        "t": "Η Θεσσαλονίκη ενσωματώθηκε στην Ελλάδα το 1830.",
+        "a": false
+      }
+    ]
   },
   {
     "type": "mcq",
@@ -5950,7 +6094,7 @@ function speak(t){
 function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 
 let view="home", cat=null, mock=null;
-const APP_VERSION="v1.11";
+const APP_VERSION="v1.13";
 function applyTheme(){
   let t; try{ t=localStorage.getItem("theme"); }catch(e){}
   if(!t) t = (window.matchMedia && matchMedia("(prefers-color-scheme:dark)").matches) ? "dark":"light";
@@ -6086,6 +6230,7 @@ function renderStudy(){
 
 function card(q, next){
   if(q.type==="mcq")  return mcqCard(q,next,false);
+  if(q.type==="imgmcq") return imgmcqCard(q,next);
   if(q.type==="tf")   return tfCard(q,next);
   if(q.type==="fill") return fillCard(q,next);
   if(q.type==="typefill") return typefillCard(q,next);
@@ -6157,6 +6302,58 @@ function mcqCard(q,next,isMock){
     };
     optEls.push(el); box.appendChild(el);
   });
+  return box;
+}
+
+/* ---- picture-answer MCQ: 4 option images, single- or multi-select ---- */
+function imgmcqCard(q,next){
+  const box=$(`<div></div>`);
+  box.appendChild(qhead(q));
+  const labels=q.labels||["Α","Β","Γ","Δ"];
+  const answer=q.answer.slice().sort((a,b)=>a-b);
+  const multi=answer.length>1;
+  let answered=false;
+  const sel=new Set();
+  const els=[];
+  if(multi) box.appendChild($(`<p class="multihint">Μπορεί να είναι σωστές παραπάνω από μία. Διάλεξε όλες τις σωστές (${answer.length}), μετά πάτησε «Έλεγχος».</p>`));
+  const grid=$(`<div class="imgrid"></div>`);
+  q.imgs.forEach((fn,i)=>{
+    const el=$(`<button class="imgopt"><span class="mark"></span><img src="img/${fn}" alt="Εικ. ${labels[i]}" loading="lazy"><span class="lab">Εικ. ${labels[i]}</span></button>`);
+    el.onclick=()=>{
+      if(answered) return;
+      if(multi){
+        if(sel.has(i)){ sel.delete(i); el.classList.remove("sel"); }
+        else { sel.add(i); el.classList.add("sel"); }
+        check.disabled = sel.size===0;
+      } else {
+        answered=true;
+        grade(new Set([i]));
+      }
+    };
+    els.push(el); grid.appendChild(el);
+  });
+  box.appendChild(grid);
+  const correctSet=new Set(answer);
+  function grade(picked){
+    answered=true;
+    const ok = picked.size===correctSet.size && [...picked].every(i=>correctSet.has(i));
+    record(q.id, ok);
+    els.forEach((e,i)=>{
+      const isAns=correctSet.has(i), isPick=picked.has(i);
+      if(isAns && isPick){ e.className="imgopt ok"; e.querySelector(".mark").textContent="✓"; e.querySelector(".mark").style.color="#059669"; }
+      else if(isPick && !isAns){ e.className="imgopt no"; e.querySelector(".mark").textContent="✗"; e.querySelector(".mark").style.color="#e11d48"; }
+      else if(isAns && !isPick){ e.className="imgopt miss"; e.querySelector(".mark").textContent="✓"; e.querySelector(".mark").style.color="#059669"; }
+      else { e.className="imgopt dim"; }
+    });
+    if(check) check.remove();
+    box.appendChild(nextBtn(next));
+  }
+  let check=null;
+  if(multi){
+    check=$(`<button class="btn btn-primary" style="margin-top:6px" disabled>Έλεγχος</button>`);
+    check.onclick=()=>{ if(!answered && sel.size) grade(new Set(sel)); };
+    box.appendChild(check);
+  }
   return box;
 }
 
@@ -6477,41 +6674,76 @@ function typefillCard(q,next){
 function attribLine(){
   return $(`<div class="map-attrib">Δεδομένα ορίων: peterdsp/greece-prefectures-and-units (GitHub)</div>`);
 }
+/* Overlay transparent, click-forwarding circles on tiny island units so they're
+   easy to tap (the halo is in SVG units, so it grows with zoom). Visual map unchanged. */
+function addHaloHits(svg){
+  if(!svg || svg._haloed) return; svg._haloed=true;
+  const NS="http://www.w3.org/2000/svg";
+  const SMALL=22;   // units: treat a unit as "small" if its larger side < this
+  const MINR=11;    // minimum halo radius in viewBox units (~22u tap diameter)
+  svg.querySelectorAll('path').forEach(p=>{
+    let bb; try{ bb=p.getBBox(); }catch(e){ return; }
+    const maxd=Math.max(bb.width,bb.height);
+    if(maxd<=0 || maxd>=SMALL) return;
+    const r=Math.max(MINR, maxd*0.6);
+    const h=document.createElementNS(NS,"circle");
+    h.setAttribute("cx", bb.x+bb.width/2);
+    h.setAttribute("cy", bb.y+bb.height/2);
+    h.setAttribute("r", r);
+    h.setAttribute("fill","transparent");
+    h.setAttribute("class","hit-halo");
+    h.style.cursor="pointer";
+    h.addEventListener('click',e=>{ e.stopPropagation(); p.dispatchEvent(new MouseEvent('click',{bubbles:false})); });
+    svg.appendChild(h);
+  });
+}
+
 function mapCard(q,next){
   const box=$(`<div></div>`);
   box.appendChild(qhead(q,true));
+
+  // zoom toolbar
+  const tools=$(`<div class="map-tools"></div>`);
+  const bMinus=$(`<button aria-label="zoom out">−</button>`);
+  const bReset=$(`<button aria-label="reset" style="font-size:16px">⟲</button>`);
+  const bPlus=$(`<button aria-label="zoom in">+</button>`);
+  const hint=$(`<span class="map-hint">Κάνε ζουμ και σύρε τον χάρτη</span>`);
+  tools.appendChild(bMinus); tools.appendChild(bReset); tools.appendChild(bPlus); tools.appendChild(hint);
+
   const wrap=$(`<div class="map-wrap"></div>`);
   wrap.innerHTML=window.GREECE_SVG||"";
   const svg=wrap.querySelector('svg');
+  let zoom=1;
+  const setZoom=z=>{ zoom=Math.max(1,Math.min(6,Math.round(z*10)/10)); svg.style.width=(zoom*100)+'%'; };
+  bPlus.onclick=()=>setZoom(zoom+0.6);
+  bMinus.onclick=()=>setZoom(zoom-0.6);
+  bReset.onclick=()=>setZoom(1);
+  // Enlarge tap targets for the smallest islands (transparent halos forward clicks).
+  requestAnimationFrame(()=>addHaloHits(svg));
+
   const status=$(`<div class="map-status"></div>`);
   const legend=$(`<div class="map-legend"></div>`);
-  box.appendChild(wrap); box.appendChild(status); box.appendChild(legend);
-  const sget=(id)=>svg.querySelector('#'+id);
+  box.appendChild(tools); box.appendChild(wrap); box.appendChild(status); box.appendChild(legend);
+  const sget=id=>svg.querySelector('#'+id);
+  const U=window.GREECE_UNITS||{};
+  const nmeOf=p=> (U[p.id.slice(1)]||"").replace(/\b\w/g,c=>c); // greek genitive already
 
   if(q.mode==="pickN"){
-    const sel=new Set(); let checked=false;
-    status.textContent=`Διάλεξε ${q.n} και πάτησε «Έλεγχος».`;
+    const acc=new Set(q.accept); let found=0, errors=0, fin=false;
+    status.textContent=`Βρες ${q.n} — πάτησέ τες στον χάρτη.`;
     svg.querySelectorAll('path').forEach(p=>p.addEventListener('click',()=>{
-      if(checked) return;
-      if(sel.has(p.id)){sel.delete(p.id);p.classList.remove('sel');}
-      else{ if(sel.size>=q.n){flash(status,`Μόνο ${q.n}`);return;} sel.add(p.id);p.classList.add('sel'); }
+      if(fin||p.classList.contains('ok')||p.classList.contains('no')) return;
+      if(acc.has(p.id)){ p.classList.add('ok'); found++; status.textContent=`Βρέθηκαν ${found}/${q.n}`; }
+      else { p.classList.add('no'); errors++; status.textContent=`Λάθος: ${U[p.id.slice(1)]||''}`; }
+      if(found>=q.n){ fin=true; record(q.id, errors===0);
+        legend.appendChild($(`<div class="corr ${errors===0?'ok-note':''}">Αποδεκτές: ${esc(q.answerText)}</div>`));
+        box.appendChild(nextBtn(next)); }
     }));
-    const btn=$(`<button class="btn btn-primary" style="margin-top:8px">Έλεγχος</button>`);
-    btn.onclick=()=>{
-      if(checked) return;
-      if(sel.size!==q.n){ flash(btn,`Διάλεξε ${q.n}`); return; }
-      checked=true; const acc=new Set(q.accept); let ok=true;
-      sel.forEach(id=>{const p=sget(id); p.classList.remove('sel');
-        if(acc.has(id)) p.classList.add('ok'); else{p.classList.add('no'); ok=false;}});
-      record(q.id, ok);
-      legend.appendChild($(`<div class="corr ${ok?'ok-note':''}">${ok?'Σωστά!':'Αποδεκτές: '+esc(q.answerText)}</div>`));
-      btn.remove(); box.appendChild(nextBtn(next));
-    };
-    box.appendChild(btn); box.appendChild(attribLine());
+    box.appendChild(attribLine());
     return box;
   }
 
-  // locate mode
+  // locate mode — every tap immediately green (a target) or red (not)
   const targets=q.targets.map((t,i)=>({label:t.label,codes:t.codes,hit:false,i}));
   let errors=0, done=0;
   const chips={};
@@ -6524,18 +6756,21 @@ function mapCard(q,next){
   targets.forEach(t=>t.codes.forEach(c=>{(c2t[c]=c2t[c]||[]).push(t);}));
   svg.querySelectorAll('path').forEach(p=>p.addEventListener('click',()=>{
     if(done===targets.length) return;
-    const ts=c2t[p.id];
-    if(!ts){ p.classList.add('no'); errors++; setTimeout(()=>p.classList.remove('no'),450); return; }
-    ts.forEach(t=>{
-      if(t.hit) return;
-      t.hit=true; done++;
-      t.codes.forEach(c=>{const pp=sget(c); if(pp) pp.classList.add('ok');});
+    if(p.classList.contains('no')) return;            // already-wrong stays wrong
+    const ts=(c2t[p.id]||[]).filter(t=>!t.hit);
+    if(!c2t[p.id]){                                    // not part of any answer → red, persists
+      if(!p.classList.contains('ok')){ p.classList.add('no'); errors++; status.textContent=`Λάθος: ${U[p.id.slice(1)]||''}`; }
+      return;
+    }
+    ts.forEach(t=>{ t.hit=true; done++;
+      t.codes.forEach(c=>{const pp=sget(c); if(pp){pp.classList.remove('no'); pp.classList.add('ok');}});
       if(chips[t.i]){ chips[t.i].classList.add('done'); chips[t.i].textContent='✓ '+t.label; }
       else legend.appendChild($(`<span class="mchip done">✓ ${esc(t.label)}</span>`));
+      status.textContent=`Σωστά: ${t.label}`;
     });
     if(done===targets.length){
       record(q.id, errors===0);
-      status.textContent = errors===0 ? 'Τέλεια — όλα σωστά!' : `Ολοκληρώθηκε (${errors} λανθασμένα πατήματα).`;
+      status.textContent = errors===0 ? 'Τέλεια — όλα σωστά!' : `Ολοκληρώθηκε (${errors} λάθος).`;
       box.appendChild(nextBtn(next));
     }
   }));
