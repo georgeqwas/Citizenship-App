@@ -6492,7 +6492,7 @@ function speak(t){
 function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 
 let view="home", cat=null, mock=null;
-const APP_VERSION="v1.20";
+const APP_VERSION="v1.21";
 function applyTheme(){
   let t; try{ t=localStorage.getItem("theme"); }catch(e){}
   if(!t) t = (window.matchMedia && matchMedia("(prefers-color-scheme:dark)").matches) ? "dark":"light";
@@ -7239,31 +7239,42 @@ function attachMapInteraction(wrap, pan, btns){
   const markMoved=()=>{ suppressUntil=Date.now()+450; };
 
   // ---- touch: two-finger pinch + one-finger pan ----
-  let tDist=0, tScale=1, tFocus=null, tPan=null, tTx=0, tTy=0, tMoved=false, tMode=null;
+  // tDist/tMid track the PREVIOUS two-finger distance & midpoint; pinch is applied incrementally
+  // (zoom around the current midpoint + follow midpoint movement) so it never drifts. The baseline
+  // is re-seeded on every change in finger count — this is what stops the "jump" when a finger lifts.
+  let tDist=0, tMid=null, tPan=null, tTx=0, tTy=0, tMoved=false, tMode=null;
+  const two=(e)=>{ const a=e.touches[0], b=e.touches[1], r=rect();
+    return {d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)||1,
+            x:(a.clientX+b.clientX)/2-r.left, y:(a.clientY+b.clientY)/2-r.top}; };
+  const seedPan=(t)=>{ tPan={x:t.clientX,y:t.clientY}; tTx=view.tx; tTy=view.ty; };
+  const seedPinch=(e)=>{ const t=two(e); tDist=t.d; tMid={x:t.x,y:t.y}; tMode='pinch'; tMoved=true; };
   wrap.addEventListener('touchstart',e=>{
-    if(e.touches.length>=2){
-      tMode='pinch'; tMoved=true;
-      const a=e.touches[0], b=e.touches[1], r=rect();
-      tDist=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)||1; tScale=view.scale;
-      tFocus={x:(a.clientX+b.clientX)/2-r.left, y:(a.clientY+b.clientY)/2-r.top};
-      markMoved(); e.preventDefault();
-    } else if(e.touches.length===1){
-      tMode='tap'; tMoved=false;
-      const t=e.touches[0]; tPan={x:t.clientX,y:t.clientY}; tTx=view.tx; tTy=view.ty;
-    }
+    if(e.touches.length>=2){ seedPinch(e); markMoved(); e.preventDefault(); }
+    else if(e.touches.length===1){ tMode='tap'; tMoved=false; seedPan(e.touches[0]); }
   },{passive:false});
   wrap.addEventListener('touchmove',e=>{
-    if(tMode==='pinch' && e.touches.length>=2){
-      const a=e.touches[0], b=e.touches[1];
-      const d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)||1;
-      zoomAt(tFocus.x, tFocus.y, tScale*(d/tDist)); markMoved(); e.preventDefault();
+    if(e.touches.length>=2){
+      if(tMode!=='pinch' || !tMid){ seedPinch(e); e.preventDefault(); return; }  // first 2-finger frame: just baseline
+      const t=two(e);
+      const ns=clamp(view.scale*(t.d/tDist), 1, 8), f=ns/view.scale;
+      // keep the content point under the midpoint fixed, and follow the midpoint as it moves
+      view.tx = t.x - f*(tMid.x - view.tx);
+      view.ty = t.y - f*(tMid.y - view.ty);
+      view.scale = ns; clampApply();
+      tDist=t.d; tMid={x:t.x,y:t.y}; tMoved=true; markMoved(); e.preventDefault();
     } else if(tPan && e.touches.length===1){
       const t=e.touches[0], dx=t.clientX-tPan.x, dy=t.clientY-tPan.y;
       if(Math.abs(dx)+Math.abs(dy)>8){ tMoved=true; tMode='pan'; markMoved(); wrap.classList.add('grabbing'); }
       if(view.scale>1 && tMoved){ view.tx=tTx+dx; view.ty=tTy+dy; clampApply(); e.preventDefault(); }
     }
   },{passive:false});
-  const tEnd=e=>{ if(tMoved) markMoved(); if(!e.touches||e.touches.length===0){ tMode=null; tPan=null; tMoved=false; wrap.classList.remove('grabbing'); } };
+  const tEnd=e=>{
+    const n=e.touches?e.touches.length:0;
+    if(tMoved) markMoved();
+    if(n===0){ tMode=null; tPan=null; tMid=null; tMoved=false; wrap.classList.remove('grabbing'); }
+    else if(n===1){ tMode='pan'; tMid=null; seedPan(e.touches[0]); }   // re-baseline pan → no jump
+    else { seedPinch(e); }                                             // still pinching → re-baseline
+  };
   wrap.addEventListener('touchend',tEnd);
   wrap.addEventListener('touchcancel',tEnd);
 
