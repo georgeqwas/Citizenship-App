@@ -45,6 +45,7 @@
   button{font-family:inherit}
   .btn{display:block; width:100%; border:none; border-radius:16px; padding:16px; font-size:18px; font-weight:700; cursor:pointer}
   .btn-primary{background:var(--sky); color:#fff}
+  .btn-warn{background:#f59e0b; color:#fff}
   .btn-dark{background:#1e293b; color:#fff}
   .btn-soft{background:#e2e8f0; color:#475569}
   .opt{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; text-align:left; border:2px solid var(--line); background:#fff; border-radius:16px; padding:15px; font-size:17px; font-weight:600; color:#334155; cursor:pointer; margin-bottom:11px}
@@ -809,9 +810,10 @@ window.QUESTIONS = [
     "q": "Σύρετε τις λέξεις στα σωστά κενά:",
     "sentence": "Α. Η Κως συνορεύει με ⟦1⟧ Β. Το Διδυμότειχο συνορεύει με ⟦2⟧ Γ. Η Εξοχή Δράμας συνορεύει με ⟦3⟧ Δ. Η Νίκη Φλώρινας με ⟦4⟧",
     "bank": [
-      "την Τουρκία (2 φορές)",
-      "τη Δημοκρατία της Βόρειας Μακεδονίας",
-      "τη Βουλγαρία"
+      "την Τουρκία",
+      "την Τουρκία",
+      "τη Βουλγαρία",
+      "τη Δημοκρατία της Βόρειας Μακεδονίας"
     ],
     "blanks": [
       [
@@ -4368,7 +4370,7 @@ window.QUESTIONS = [
     "bank": [
       "του Σαρανταπόρου",
       "του Μαραθώνα",
-      "στο Ματζικέρτ",
+      "του Ματζικέρτ",
       "της Αλαμάνας"
     ],
     "blanks": [
@@ -5144,9 +5146,14 @@ window.QUESTIONS = [
     "id": "ins_023"
   },
   {
-    "type": "open",
-    "q": "Ποιες από τις παρακάτω δηλώσεις σχετικά με τη στράτευση στην Ελλάδα είναι σωστές:\nΑ. Κάθε Έλληνας που μπορεί να φέρει όπλα είναι υποχρεωμένος να συντελεί στην άμυνα της Πατρίδας, σύμφωνα με τους ορισμούς των νόμων B. Η στρατιωτική θητεία στην Ελλάδα είναι υποχρεωτική και για τους άνδρες και για τις γυναίκες.  Γ. Η διάρκεια της στρατιωτικής θητείας στην Ελλάδα είναι υποχρεωτικά 24 μήνες.  Δ. Υπάρχει δυνατότητα εξαγοράς υπολοίπου της στρατιωτικής θητείας για όποιον το επιθυμεί.",
-    "answerText": "Σωστές απαντήσεις: Α, Δ",
+    "type": "tf",
+    "q": "Δηλώσεις σχετικά με τη στράτευση στην Ελλάδα — Σωστό ή Λάθος;",
+    "statements": [
+      {"t": "Κάθε Έλληνας που μπορεί να φέρει όπλα είναι υποχρεωμένος να συντελεί στην άμυνα της Πατρίδας, σύμφωνα με τους ορισμούς των νόμων.", "a": true},
+      {"t": "Η στρατιωτική θητεία στην Ελλάδα είναι υποχρεωτική και για τους άνδρες και για τις γυναίκες.", "a": false},
+      {"t": "Η διάρκεια της στρατιωτικής θητείας στην Ελλάδα είναι υποχρεωτικά 24 μήνες.", "a": false},
+      {"t": "Υπάρχει δυνατότητα εξαγοράς υπολοίπου της στρατιωτικής θητείας για όποιον το επιθυμεί.", "a": true}
+    ],
     "cat": "institutions",
     "id": "ins_024"
   },
@@ -5448,7 +5455,7 @@ window.QUESTIONS = [
       "επίκαιρες επερωτήσεις",
       "επερωτήσεις",
       "πρόταση δυσπιστίας",
-      "ερωτήσεις Α"
+      "ερωτήσεις"
     ],
     "blanks": [
       [
@@ -5517,7 +5524,7 @@ window.QUESTIONS = [
     "blanks": [
       [
         1,
-        "Τον/την Πρόεδρο της Βουλής"
+        "τον/την Πρόεδρο της Βουλής"
       ],
       [
         2,
@@ -5525,7 +5532,7 @@ window.QUESTIONS = [
       ],
       [
         3,
-        "Τον/την Πρόεδρο της Δημοκρατίας"
+        "τον/την Πρόεδρο της Δημοκρατίας"
       ],
       [
         4,
@@ -6611,7 +6618,7 @@ function renderStudy(){
   w.appendChild(bar);
   w.appendChild(card(q, ()=>{ sIdx=(sIdx+1)%sOrder.length; renderStudy(); }));
   if(sOrder.length>1){
-    const skip=$(`<button class="btn btn-primary" style="margin-top:14px">Παράλειψη</button>`);
+    const skip=$(`<button class="btn btn-warn" style="margin-top:28px; margin-bottom:8px">Παράλειψη</button>`);
     skip.onclick=()=>{
       const wasLast = sIdx===sOrder.length-1;
       const [qq]=sOrder.splice(sIdx,1);   // pull the current question out…
@@ -7427,7 +7434,7 @@ function progressView(){
   w.appendChild($(`<h2 class="sec">Ανά ενότητα</h2>`));
   Object.entries(CATS).forEach(([k,c])=>{
     const p=catProg(k), pct=p.total?Math.round(p.known/p.total*100):0;
-    w.appendChild($(`<div class="card" style="margin-bottom:11px"><div class="row" style="margin-bottom:6px"><span>${c.emoji}</span><b>${c.label}</b><span class="count">${p.known}/${p.total}</span></div>
+    w.appendChild($(`<div class="card" style="margin-bottom:11px"><div class="row" style="margin-bottom:6px; gap:9px"><span class="ico" style="width:30px; height:30px; border-radius:8px; background:${c.color}1a">${icon(k,18)}</span><b>${c.label}</b><span class="count">${p.known}/${p.total}</span></div>
       <div class="bar"><i style="width:${pct}%;background:${c.color}"></i></div></div>`));
   });
   const m=mistakes().length;
